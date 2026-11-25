@@ -18,103 +18,151 @@ pair<ll, ll> euk(ll a, ll b){
 // g = gcd(a, b)
 // xall = x + k * b / g
 // yall = y - k * a / g
-struct FastIO{
-    ~FastIO(){
-        Flush();
-    }
+struct Cin {
     static const int Size = 1 << 21;
-    char ibuffer[Size];
-    int ipos = 0, ien = 0;
-    int GetChar(){
-        if(ipos == ien){
-            ien = fread(ibuffer, 1, Size, stdin);
-            ipos = 0;
-            if(ien == 0) return EOF;
+    char ibuf[Size];
+    int i = 0, e = 0;
+    
+    int GetChar() {
+        if (i == e) {
+            e = fread(ibuf, 1, Size, stdin);
+            i = 0;
+            if(!e) return EOF;
         }
-        return ibuffer[ipos++];
+        return ibuf[i++];
     }
-    void igi(long long& n){
-        n = 0;
-        bool im = false;
-        int c;
-        c = GetChar();
-        while(c <= ' ' && c != EOF){
-            c = GetChar();
-        }
-        if(c == '-'){
-            im = true;
-            c = GetChar();
-        }
-        while(c >= '0' && c <= '9'){
-            n *= 10;
-            n += c - '0';
-            c = GetChar();
-        }
-        if(im) n *= -1;
-    }
-    string igs(){
+    
+    inline int GetWhite() {
         int c = GetChar();
-        string odp;
-        odp.reserve(32);
-        while(c <= ' ' && c != EOF) c = GetChar();
-        while(c > ' ' && c != EOF){
-            odp.push_back(c);
-            c  = GetChar();
+        while (c <= ' ' && c != EOF) c = GetChar();
+        return c;
+    }
+    
+    Cin& operator>>(char& c) {
+        c = GetWhite();
+        return *this;
+    }
+    Cin& operator>>(string& s) {
+        s.clear();
+        int c = GetWhite();
+        while (c > ' ' && c != EOF) {
+            s.push_back(c);
+            c = GetChar();
         }
-        return odp;
+        return *this;
     }
-    void igc(char& c){
-        int ch = GetChar();
-        while(ch <= ' ' && ch != EOF){
-            ch = GetChar();
-        }
-        c = ch;
-    }
-    char obuffer[Size];
-    int opos = 0;
-    void Flush(){
-        fwrite(obuffer, 1, opos, stdout);
-        opos = 0;
-    }
-    void PutChar(char c){
-        if(opos == Size) Flush();
-        obuffer[opos++] = c;
-    }
-    void ogs(const char* s){
-        while(*s){
-            PutChar(*s);
-            ++s;
-        }
-    }
-    void ogi(ll nn){
-        char buf[21];
-        int st = 19;
-        buf[20] = '\0';
-        bool im = false;
-        if(nn == 0){
-            buf[st] = '0';
-            st--;
-        }
-        unsigned long long x;
-        if(nn < 0){
-            x = -(unsigned long long)nn;
-            im = true;
+    template <typename T>
+    Cin& operator>>(T& a) {
+        if constexpr (is_floating_point_v<T>){
+            static string s;
+            s.clear();
+            int c = GetWhite();
+            if(c == '+') c = GetChar();
+            while (c != EOF && c > ' ') {
+                s.push_back(c);
+                c = GetChar();
+            }
+            from_chars(s.c_str(), s.c_str() + s.size(), a);
         }
         else{
-            x = nn;
+            int c = GetWhite();
+            bool im = c == '-';
+            if (c < '0' || c > '9') c = GetChar();
+            a = 0;
+            while (c >= '0' && c <= '9') {
+                a = 10 * a + (1 - 2 * im) * (c - '0');
+                c = GetChar();
+            }
         }
-        while(x > 0){
-            buf[st] = '0' + x % 10;
-            st--;
-            x /= 10;
+        return *this;
+    }
+    
+    Cin& operator>>(bool& b){
+        int x;
+        operator>>(x);
+        b = x;
+        return *this;
+    }
+    
+    
+};
+struct Cout{
+    ~Cout() { Flush(); }
+    static const int Size = 1 << 21;
+    static const int Fsize = 1 << 17;
+    char obuf[Size];
+    char fbuf[Fsize];
+    int o = 0;
+    int prec = 6;
+    void Flush() {
+        fwrite(obuf, 1, o, stdout);
+        o = 0;
+    }
+    inline bool ToFlush(int ile = 64) const {
+        return ile >= Size - o;
+    }
+    void PutChar(char c) {
+        if (ToFlush()) Flush();
+        obuf[o++] = c;
+    }
+    Cout& operator<<(const string& s) {
+        for (auto c : s) PutChar(c);
+        return *this;
+    }
+    Cout& operator<<(const char* s) {
+        while(*s) PutChar(*s++);
+        return *this;
+    }
+    Cout& operator<<(char* s) {
+        return operator<<((const char*)s);
+    }
+    Cout& operator<<(char c) {
+        PutChar(c);
+        return *this;
+    }
+    Cout& operator<<(__int128 x) {
+        if (x < 0) {
+            PutChar('-');
+            return operator<<(-(unsigned __int128)x);
         }
-        if(im){
-            buf[st] = '-';
-            st--;
-        }
-        ogs(buf + st + 1);
+        return operator<<((unsigned __int128)x);
+    }
+    Cout& operator<<(unsigned __int128 x) {
+        if (x <= ULLONG_MAX) return operator<<((unsigned long long)x);
+        char buf[64];
+        int n = 0;
+        while (x) { buf[n++] = '0' + (int)(x % 10); x /= 10; }
+        while (n) PutChar(buf[--n]);
+        return *this;
+    }
+    template <typename T>
+    Cout& operator<<(const T& a) {
+        if(ToFlush()) Flush();
+        o = to_chars(obuf + o, obuf + Size, a).ptr - obuf;
+        return *this;
+    }
+    Cout& operator<<(const bool& b){
+        int x = b;
+        return operator<<(x);
+    }
+    Cout& operator<<(const float& f){
+        return operator<<((long double)f);
+    }
+    Cout& operator<<(const double& f){
+        return operator<<((long double)f);
+    }
+    Cout& operator<<(const long double& f){
+        const int n = snprintf(fbuf, Fsize, "%.*Lf", prec, f);
+        if(ToFlush(n)) Flush();
+        memcpy(obuf + o, fbuf, n);
+        o += n;
+        return *this;
     }
 };
+Cin ci;
+Cout co;
 int main(){
-    fast;
+    int a;
+    ci >> a;
+    co << a << '\n';
 }
